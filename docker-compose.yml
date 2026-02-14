@@ -1,0 +1,10 @@
+services:
+  foosbot:
+    build: .
+    env_file: .env
+    volumes:
+      - foosbot-data:/data
+    restart: unless-stopped
+
+volumes:
+  foosbot-data:

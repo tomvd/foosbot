@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'io.micronaut.application' version '4.4.4'
+}
+
+group = 'com.foosbot'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Micronaut
+    annotationProcessor 'io.micronaut:micronaut-inject-java'
+    implementation 'io.micronaut:micronaut-inject'
+    implementation 'io.micronaut:micronaut-runtime'
+    runtimeOnly 'ch.qos.logback:logback-classic'
+    runtimeOnly 'org.yaml:snakeyaml'
+
+    // Slack Bolt
+    implementation 'com.slack.api:bolt:1.44.2'
+    implementation 'com.slack.api:bolt-socket-mode:1.44.2'
+    implementation 'org.glassfish.tyrus.bundles:tyrus-standalone-client:1.20'
+
+    // SQLite
+    implementation 'org.xerial:sqlite-jdbc:3.47.1.0'
+
+    // Flyway
+    implementation 'org.flywaydb:flyway-core:10.21.0'
+
+    // Micronaut JDBC
+    implementation 'io.micronaut.sql:micronaut-jdbc-hikari'
+
+    // JSON serialization (required by Micronaut HTTP server)
+    implementation 'io.micronaut.serde:micronaut-serde-jackson'
+    annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
+}
+
+application {
+    mainClass.set('com.foosbot.Application')
+}
+
+micronaut {
+    version '4.7.6'
+    runtime 'netty'
+    processing {
+        incremental true
+        annotations 'com.foosbot.*'
+    }
+}
+
+shadowJar {
+    mergeServiceFiles()
+}

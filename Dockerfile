@@ -1,0 +1,20 @@
+FROM eclipse-temurin:21-jdk AS build
+
+WORKDIR /app
+COPY gradle/ gradle/
+COPY gradlew build.gradle settings.gradle ./
+RUN chmod +x gradlew && ./gradlew --no-daemon dependencies
+
+COPY src/ src/
+RUN ./gradlew --no-daemon shadowJar
+
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+COPY --from=build /app/build/libs/*-all.jar foosbot.jar
+
+RUN mkdir -p /data
+
+ENV FOOSBOT_DB_PATH=/data/foosbot.db
+
+ENTRYPOINT ["java", "-jar", "foosbot.jar"]
