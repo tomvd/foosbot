@@ -44,6 +44,10 @@ public class AppMentionHandler implements BoltEventHandler<AppMentionEvent> {
 
             LOG.info("Received mention from {} in {}: {}", userId, channelId, text);
 
+            if (text.contains("stats reset")) {
+                return handleStatsReset(ctx, channelId);
+            }
+
             if (text.contains("stats")) {
                 boolean allTime = text.contains("all time") || text.contains("alltime") || text.contains("stats all");
                 return handleStats(ctx, channelId, allTime);
@@ -55,10 +59,21 @@ public class AppMentionHandler implements BoltEventHandler<AppMentionEvent> {
 
             // Default: show help
             ctx.say("Hi! I'm foosbot :soccer:\n" +
-                    "Commands:\n" +
+                    "*Commands:*\n" +
                     "\u2022 `@foosbot play` - Start or join a foosball game\n" +
                     "\u2022 `@foosbot stats` - Show weekly stats\n" +
-                    "\u2022 `@foosbot stats all` - Show all time stats");
+                    "\u2022 `@foosbot stats all` - Show all time stats\n" +
+                    "\u2022 `@foosbot stats reset` - Clear all stats\n\n" +
+                    "*Stats Glossary:*\n" +
+                    "\u2022 *GPG* - Goals Per Game\n" +
+                    "\u2022 *GWG* - Game Winning Goals\n" +
+                    "\u2022 *+/-* - Plus/minus differential (team goals scored vs conceded)\n" +
+                    "\u2022 *G* - Goals\n" +
+                    "\u2022 *GP* - Games Played\n" +
+                    "\u2022 *MP* - Matches Played\n" +
+                    "\u2022 *MWin%* - Match Win Percentage\n" +
+                    "\u2022 *GAA* - Goals Against Average\n" +
+                    "\u2022 *SO* - Shutouts (no goals conceded)");
         } catch (Exception e) {
             LOG.error("Error handling app mention", e);
         }
@@ -126,6 +141,15 @@ public class AppMentionHandler implements BoltEventHandler<AppMentionEvent> {
                 .channel(channelId)
                 .text(header)
                 .attachments(StatsView.build(stats)));
+        return ctx.ack();
+    }
+
+    private Response handleStatsReset(EventContext ctx, String channelId)
+            throws IOException, SlackApiException {
+        statsService.resetAll();
+        ctx.client().chatPostMessage(r -> r
+                .channel(channelId)
+                .text(":wastebasket: All stats have been reset."));
         return ctx.ack();
     }
 

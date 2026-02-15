@@ -146,6 +146,18 @@ public class StatsRepository {
         return executeQuery(sql);
     }
 
+    public void resetAll() {
+        try (Connection conn = dataSource.getConnection();
+             var s = conn.createStatement()) {
+            s.executeUpdate("DELETE FROM game_players");
+            s.executeUpdate("DELETE FROM game_sets");
+            s.executeUpdate("DELETE FROM games");
+            s.executeUpdate("DELETE FROM players");
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to reset stats", e);
+        }
+    }
+
     private List<Map<String, Object>> executeQuery(String sql) {
         List<Map<String, Object>> results = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();

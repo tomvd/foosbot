@@ -24,6 +24,10 @@ public class StatsService {
         return getStats(true);
     }
 
+    public void resetAll() {
+        statsRepository.resetAll();
+    }
+
     private Map<String, List<Map<String, Object>>> getStats(boolean allTime) {
         Map<String, List<Map<String, Object>>> stats = new LinkedHashMap<>();
         stats.put("Player Stats", statsRepository.getPlayerStats(allTime));
