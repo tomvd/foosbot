@@ -26,13 +26,14 @@ Add these **Bot Token Scopes**:
 - `chat:write`
 - `users:read`
 
+### Socket Mode
+1. Go to **Socket Mode** and enable it
+2. Create an **App-Level Token** with the `connections:write` scope — save this as `SLACK_APP_TOKEN`
+
 ### Event Subscriptions
 Enable **Events** and subscribe to:
 - `app_mention`
 
-### Socket Mode
-1. Go to **Socket Mode** and enable it
-2. Create an **App-Level Token** with the `connections:write` scope — save this as `SLACK_APP_TOKEN`
 
 ### Install to Workspace
 1. Go to **Install App** and click **Install to Workspace**

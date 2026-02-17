@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 COPY gradle/ gradle/
 COPY gradlew build.gradle settings.gradle ./
-RUN chmod +x gradlew && ./gradlew --no-daemon dependencies
+RUN chmod +x gradlew && sed -i 's/\r$//' gradlew && ./gradlew --no-daemon dependencies
 
 COPY src/ src/
 RUN ./gradlew --no-daemon shadowJar
