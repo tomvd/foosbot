@@ -22,13 +22,13 @@ public class StatsRepository {
     }
 
     /**
-     * Player Stats: GPG, GWG, +/-, G, GP, MP, MWin%
+     * Rankings: Games, Wins, Win%, Goals — sorted by win%
      */
     public List<Map<String, Object>> getPlayerStats(boolean allTime) {
         String timeFilter = allTime ? "" : "AND g.start_time >= datetime('now', '-7 days')";
         String sql = String.format("""
                 SELECT p.display_name,
-                       ROUND(CAST(SUM(gp.goals) AS REAL) / MAX(COUNT(DISTINCT gp.game_id), 1), 2) as gpg,
+                       COUNT(DISTINCT gp.game_id) as games,
                        SUM(CASE WHEN g.status = 'COMPLETED'
                            AND ((gp.team = 'BLUE' AND
                                  (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
@@ -36,19 +36,7 @@ public class StatsRepository {
                             OR (gp.team = 'RED' AND
                                  (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
                                  > (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')))
-                           THEN 1 ELSE 0 END) as gwg,
-                       SUM(CASE WHEN g.status = 'COMPLETED' THEN
-                           CASE WHEN gp.team = 'BLUE' THEN
-                               (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
-                               - (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
-                           ELSE
-                               (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
-                               - (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
-                           END
-                       ELSE 0 END) as plus_minus,
-                       SUM(gp.goals) as goals,
-                       COUNT(DISTINCT gp.game_id) as gp,
-                       COUNT(DISTINCT gp.game_id) as mp,
+                           THEN 1 ELSE 0 END) as wins,
                        ROUND(100.0 * SUM(CASE WHEN g.status = 'COMPLETED'
                            AND ((gp.team = 'BLUE' AND
                                  (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
@@ -56,42 +44,28 @@ public class StatsRepository {
                             OR (gp.team = 'RED' AND
                                  (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
                                  > (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')))
-                           THEN 1 ELSE 0 END) / MAX(COUNT(DISTINCT gp.game_id), 1)) as mwin_pct
+                           THEN 1 ELSE 0 END) / MAX(COUNT(DISTINCT gp.game_id), 1)) as win_pct,
+                       SUM(gp.goals) as goals
                 FROM game_players gp
                 JOIN games g ON gp.game_id = g.id
                 JOIN players p ON gp.player_id = p.id
                 WHERE g.status = 'COMPLETED'
                   %s
                 GROUP BY p.id
-                ORDER BY gpg DESC
+                ORDER BY win_pct DESC, goals DESC
                 """, timeFilter);
         return executeQuery(sql);
     }
 
     /**
-     * Forward Stats: GPG, GAA, G, GP, +/-
+     * Top Scorers (forwards): Goals, Goals per game — sorted by goals per game
      */
     public List<Map<String, Object>> getForwardStats(boolean allTime) {
         String timeFilter = allTime ? "" : "AND g.start_time >= datetime('now', '-7 days')";
         String sql = String.format("""
                 SELECT p.display_name,
-                       ROUND(CAST(SUM(gp.goals) AS REAL) / MAX(COUNT(DISTINCT gp.game_id), 1), 2) as gpg,
-                       ROUND(CAST(SUM(CASE WHEN gp.team = 'BLUE' THEN
-                           (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
-                       ELSE
-                           (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
-                       END) AS REAL) / MAX(COUNT(DISTINCT gp.game_id), 1), 2) as gaa,
                        SUM(gp.goals) as goals,
-                       COUNT(DISTINCT gp.game_id) as gp,
-                       SUM(CASE WHEN g.status = 'COMPLETED' THEN
-                           CASE WHEN gp.team = 'BLUE' THEN
-                               (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
-                               - (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
-                           ELSE
-                               (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
-                               - (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
-                           END
-                       ELSE 0 END) as plus_minus
+                       ROUND(CAST(SUM(gp.goals) AS REAL) / MAX(COUNT(DISTINCT gp.game_id), 1), 1) as per_game
                 FROM game_players gp
                 JOIN games g ON gp.game_id = g.id
                 JOIN players p ON gp.player_id = p.id
@@ -99,41 +73,28 @@ public class StatsRepository {
                   AND gp.position = 'FORWARD'
                   %s
                 GROUP BY p.id
-                ORDER BY gpg DESC
+                ORDER BY per_game DESC, goals DESC
                 """, timeFilter);
         return executeQuery(sql);
     }
 
     /**
-     * Goalie Stats: GAA, GPG, G, GP, +/-, SO
+     * Goalies: Goals let in, Goals let in per game — sorted by per game ASC
      */
     public List<Map<String, Object>> getGoalieStats(boolean allTime) {
         String timeFilter = allTime ? "" : "AND g.start_time >= datetime('now', '-7 days')";
         String sql = String.format("""
                 SELECT p.display_name,
+                       SUM(CASE WHEN gp.team = 'BLUE' THEN
+                           (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
+                       ELSE
+                           (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
+                       END) as goals_let_in,
                        ROUND(CAST(SUM(CASE WHEN gp.team = 'BLUE' THEN
                            (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
                        ELSE
                            (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
-                       END) AS REAL) / MAX(COUNT(DISTINCT gp.game_id), 1), 2) as gaa,
-                       ROUND(CAST(SUM(gp.goals) AS REAL) / MAX(COUNT(DISTINCT gp.game_id), 1), 2) as gpg,
-                       SUM(gp.goals) as goals,
-                       COUNT(DISTINCT gp.game_id) as gp,
-                       SUM(CASE WHEN g.status = 'COMPLETED' THEN
-                           CASE WHEN gp.team = 'BLUE' THEN
-                               (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
-                               - (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
-                           ELSE
-                               (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED')
-                               - (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE')
-                           END
-                       ELSE 0 END) as plus_minus,
-                       SUM(CASE WHEN g.status = 'COMPLETED'
-                           AND ((gp.team = 'BLUE' AND
-                                 (SELECT SUM(gp3.goals) FROM game_players gp3 WHERE gp3.game_id = g.id AND gp3.team = 'RED') = 0)
-                            OR (gp.team = 'RED' AND
-                                 (SELECT SUM(gp2.goals) FROM game_players gp2 WHERE gp2.game_id = g.id AND gp2.team = 'BLUE') = 0))
-                           THEN 1 ELSE 0 END) as shutouts
+                       END) AS REAL) / MAX(COUNT(DISTINCT gp.game_id), 1), 1) as per_game
                 FROM game_players gp
                 JOIN games g ON gp.game_id = g.id
                 JOIN players p ON gp.player_id = p.id
@@ -141,7 +102,7 @@ public class StatsRepository {
                   AND gp.position = 'GOALIE'
                   %s
                 GROUP BY p.id
-                ORDER BY gaa ASC
+                ORDER BY per_game ASC
                 """, timeFilter);
         return executeQuery(sql);
     }

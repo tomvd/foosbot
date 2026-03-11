@@ -24,8 +24,6 @@ public class GameView {
     public static List<Attachment> build(GameState game) {
         List<Attachment> attachments = new ArrayList<>();
 
-        // Wins tracker
-        attachments.add(buildWinsAttachment(game));
         // Blue team
         attachments.add(buildTeamAttachment(game, Team.BLUE, "#0000ff"));
         // Red team
@@ -34,25 +32,6 @@ public class GameView {
         attachments.add(buildGameActionsAttachment(game));
 
         return attachments;
-    }
-
-    private static Attachment buildWinsAttachment(GameState game) {
-        String winsText = String.format("*Wins:*    :large_blue_circle: %d   :blue_book: %d   :red_circle: %d   :closed_book: %d",
-                game.getBlueWins(), game.getBlueWins(),
-                game.getRedWins(), game.getRedWins());
-
-        // Simplified: show blue/red wins
-        winsText = String.format("*Wins:*    :large_blue_circle: %d   :red_circle: %d",
-                game.getBlueWins(), game.getRedWins());
-
-        return Attachment.builder()
-                .color("#cccccc")
-                .blocks(List.<LayoutBlock>of(
-                        SectionBlock.builder()
-                                .text(MarkdownTextObject.builder().text(winsText).build())
-                                .build()
-                ))
-                .build();
     }
 
     private static Attachment buildTeamAttachment(GameState game, Team team, String color) {
@@ -84,6 +63,7 @@ public class GameView {
         }
 
         return Attachment.builder()
+                .fallback("Foosball game")
                 .color(color)
                 .blocks(blocks)
                 .build();
@@ -92,25 +72,14 @@ public class GameView {
     private static Attachment buildGameActionsAttachment(GameState game) {
         List<BlockElement> buttons = new ArrayList<>();
 
-        // Game Won button - only enabled when winnable
-        ButtonElement gameWonBtn = ButtonElement.builder()
-                .text(PlainTextObject.builder().text("Game Won").build())
-                .actionId("game_won")
+        buttons.add(ButtonElement.builder()
+                .text(PlainTextObject.builder().text("End Game").build())
+                .actionId("game_end")
                 .style("primary")
-                .build();
-        buttons.add(gameWonBtn);
-
-        buttons.add(ButtonElement.builder()
-                .text(PlainTextObject.builder().text("Match Over").build())
-                .actionId("game_match_over")
-                .build());
-
-        buttons.add(ButtonElement.builder()
-                .text(PlainTextObject.builder().text("More...").build())
-                .actionId("game_more")
                 .build());
 
         return Attachment.builder()
+                .fallback("Foosball game actions")
                 .color("#cccccc")
                 .blocks(List.<LayoutBlock>of(
                         ActionsBlock.builder()

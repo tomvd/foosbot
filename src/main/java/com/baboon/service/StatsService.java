@@ -30,9 +30,9 @@ public class StatsService {
 
     private Map<String, List<Map<String, Object>>> getStats(boolean allTime) {
         Map<String, List<Map<String, Object>>> stats = new LinkedHashMap<>();
-        stats.put("Player Stats", statsRepository.getPlayerStats(allTime));
-        stats.put("Forward Stats", statsRepository.getForwardStats(allTime));
-        stats.put("Goalie Stats", statsRepository.getGoalieStats(allTime));
+        stats.put("Rankings", statsRepository.getPlayerStats(allTime));
+        stats.put("Top Scorers", statsRepository.getForwardStats(allTime));
+        stats.put("Goalies", statsRepository.getGoalieStats(allTime));
         return stats;
     }
 }

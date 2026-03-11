@@ -20,6 +20,7 @@ public class BusyView {
     public static List<Attachment> build() {
         return List.of(
                 Attachment.builder()
+                        .fallback("Foosball game in progress")
                         .color("#cccccc")
                         .blocks(List.<LayoutBlock>of(
                                 SectionBlock.builder()

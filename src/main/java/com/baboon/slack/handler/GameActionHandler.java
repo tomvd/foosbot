@@ -44,33 +44,7 @@ public class GameActionHandler {
         return ctx.ack();
     }
 
-    public Response handleGameWon(BlockActionRequest req, ActionContext ctx) {
-        try {
-            String channelId = req.getPayload().getChannel().getId();
-            String userId = req.getPayload().getUser().getId();
-
-            GameState game = gameService.getActiveGame(channelId);
-            if (game == null) return ctx.ack();
-            if (!game.isParticipant(userId)) return ctx.ack();
-
-            // Validate: game must be winnable (11+ goals, 2+ lead)
-            if (!game.isGameWinnable()) {
-                LOG.warn("Game won attempted but conditions not met in channel {}", channelId);
-                return ctx.ack();
-            }
-
-            // Record the set win
-            gameService.gameWon(channelId);
-
-            // For V1, game won = match over
-            return finishGame(ctx, channelId);
-        } catch (Exception e) {
-            LOG.error("Error handling game won", e);
-        }
-        return ctx.ack();
-    }
-
-    public Response handleMatchOver(BlockActionRequest req, ActionContext ctx) {
+    public Response handleEndGame(BlockActionRequest req, ActionContext ctx) {
         try {
             String channelId = req.getPayload().getChannel().getId();
             String userId = req.getPayload().getUser().getId();
@@ -81,7 +55,7 @@ public class GameActionHandler {
 
             return finishGame(ctx, channelId);
         } catch (Exception e) {
-            LOG.error("Error handling match over", e);
+            LOG.error("Error handling end game", e);
         }
         return ctx.ack();
     }
@@ -110,20 +84,25 @@ public class GameActionHandler {
         GameState game = gameService.getActiveGame(channelId);
         if (game == null) return ctx.ack();
 
-        // Delete the game message
-        if (game.getMessageTs() != null) {
-            ctx.client().chatDelete(r -> r.channel(channelId).ts(game.getMessageTs()));
-        }
+        String messageTs = game.getMessageTs();
 
         // Complete the game in DB
         GameState completedGame = gameService.completeGame(channelId);
         if (completedGame == null) return ctx.ack();
 
-        // Post scoreboard
-        ctx.client().chatPostMessage(r -> r
-                .channel(channelId)
-                .text(":trophy: Game Over!")
-                .attachments(ScoreboardView.build(completedGame)));
+        // Update the existing message with the scoreboard (preserves any threads)
+        if (messageTs != null) {
+            ctx.client().chatUpdate(r -> r
+                    .channel(channelId)
+                    .ts(messageTs)
+                    .text(":trophy: Game Over!")
+                    .attachments(ScoreboardView.build(completedGame)));
+        } else {
+            ctx.client().chatPostMessage(r -> r
+                    .channel(channelId)
+                    .text(":trophy: Game Over!")
+                    .attachments(ScoreboardView.build(completedGame)));
+        }
 
         LOG.info("Game finished and scoreboard posted in channel {}", channelId);
         return ctx.ack();

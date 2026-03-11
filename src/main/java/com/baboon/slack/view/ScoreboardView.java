@@ -12,11 +12,20 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class ScoreboardView {
 
+    private static final Random RANDOM = new Random();
     private static final String[] WINNER_EMOJIS = {":sunglasses:", ":grin:", ":muscle:", ":star-struck:", ":fire:"};
     private static final String[] LOSER_EMOJIS = {":neutral_face:", ":money_mouth_face:", ":sweat_smile:", ":grimacing:", ":pensive:"};
+    private static final String[] WINNER_TAUNTS = {
+            "Bow down to your foosball overlords :gorilla:",
+            "The jungle has spoken — all hail :gorilla:",
+            "These primates just climbed to the top of the food chain :gorilla:",
+            "Kneel before your foosball silverbacks :gorilla:",
+            "The alpha baboons have spoken :gorilla:"
+    };
 
     public static List<Attachment> build(GameState game) {
         List<Attachment> attachments = new ArrayList<>();
@@ -34,10 +43,12 @@ public class ScoreboardView {
                 .orElse("");
 
         // Trophy header
+        String taunt = WINNER_TAUNTS[RANDOM.nextInt(WINNER_TAUNTS.length)];
         String headerText = String.format(":trophy: %s TEAM ARE THE CHAMPIONS! :trophy:\n" +
-                "Everyone worship your new winners %s! :clap:", winTeamName, winnerNames);
+                "%s — %s! :clap:", winTeamName, taunt, winnerNames);
 
         attachments.add(Attachment.builder()
+                .fallback("Foosball match result")
                 .color(winningTeam == Team.BLUE ? "#0000ff" : "#ff0000")
                 .blocks(List.<LayoutBlock>of(
                         SectionBlock.builder()
@@ -49,6 +60,7 @@ public class ScoreboardView {
         // Final score
         String scoreText = String.format("*Final Score: %d-%d*", totalBlue, totalRed);
         attachments.add(Attachment.builder()
+                .fallback("Foosball final score")
                 .color("#cccccc")
                 .blocks(List.<LayoutBlock>of(
                         SectionBlock.builder()
@@ -80,6 +92,7 @@ public class ScoreboardView {
         String durationText = String.format(":soccer: Game lasted *%s*.", durationStr);
 
         attachments.add(Attachment.builder()
+                .fallback("Foosball game duration")
                 .color("#cccccc")
                 .blocks(List.<LayoutBlock>of(
                         SectionBlock.builder()
@@ -107,6 +120,7 @@ public class ScoreboardView {
         }
 
         return Attachment.builder()
+                .fallback("Foosball player scores")
                 .color(color)
                 .blocks(List.<LayoutBlock>of(
                         SectionBlock.builder()

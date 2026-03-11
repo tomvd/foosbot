@@ -5,10 +5,10 @@ A Slack bot for office foosball matchmaking and scorekeeping. Manages 2v2 game l
 ## Features
 
 - **Matchmaking Lobby** — `@baboon play` creates/joins a lobby with team assignment, position switching, and shuffle
+- **Add Players** — `@baboon add @player` lets anyone add a colleague to the lobby by mention
 - **Live Scoring** — Interactive buttons for each player to track goals in real-time
-- **Game Rules** — Win condition: 11+ goals with 2+ goal lead
 - **Scoreboard** — Post-game summary with winners, goals per player, and game duration
-- **Weekly Stats** — Player, Forward, and Goalie stats with GPG, GAA, +/-, and more
+- **Weekly Stats** — Rankings by win rate, top scorers, and goalie leaderboard
 
 ## Prerequisites
 
@@ -68,17 +68,18 @@ Enable **Events** and subscribe to:
 | Command | Description |
 |---------|-------------|
 | `@baboon play` | Start or join a foosball game |
-| `@baboon stats` | Show weekly player statistics |
+| `@baboon add @player` | Add another player to the lobby |
+| `@baboon stats` | Show weekly rankings, top scorers and goalie stats |
+| `@baboon stats all` | Show all-time rankings, top scorers and goalie stats |
+| `@baboon stats reset` | Reset all stats |
 
 ### Game Flow
 1. Someone mentions `@baboon play` — a lobby is created
-2. Others mention `@baboon play` to join (4 players needed)
+2. Others mention `@baboon play` to join, or anyone can use `@baboon add @player` to add a colleague (4 players needed)
 3. Players can **Switch Positions** (F/G) and **Shuffle Teams**
-4. All 4 players hit **Ready** to start the game
+4. Any player hits **Start Game** to begin
 5. During the game, click player buttons to add goals
-6. **Game Won** becomes available when a team has 11+ goals with a 2+ lead
-7. **Match Over** ends the game early
-8. A scoreboard is posted with the final results
+6. Hit **End Game** to finish — the game message updates in place with the final scoreboard
 
 ## Development
 

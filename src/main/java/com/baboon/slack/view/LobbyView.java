@@ -24,10 +24,8 @@ public class LobbyView {
         attachments.add(buildTeamAttachment(lobby, Team.BLUE, "#0000ff"));
         // Red team attachment
         attachments.add(buildTeamAttachment(lobby, Team.RED, "#ff0000"));
-        // Actions attachment (shuffle, cancel)
+        // Actions attachment (shuffle, cancel, start)
         attachments.add(buildActionsAttachment(lobby));
-        // Ready section
-        attachments.add(buildReadyAttachment(lobby));
 
         return attachments;
     }
@@ -66,6 +64,7 @@ public class LobbyView {
         }
 
         return Attachment.builder()
+                .fallback("Foosball lobby")
                 .color(color)
                 .blocks(blocks)
                 .build();
@@ -73,6 +72,14 @@ public class LobbyView {
 
     private static Attachment buildActionsAttachment(LobbyState lobby) {
         List<BlockElement> buttons = new ArrayList<>();
+
+        if (lobby.isFull()) {
+            buttons.add(ButtonElement.builder()
+                    .text(PlainTextObject.builder().text("Start Game").build())
+                    .actionId("lobby_start")
+                    .style("primary")
+                    .build());
+        }
 
         buttons.add(ButtonElement.builder()
                 .text(PlainTextObject.builder().text("Shuffle Teams").build())
@@ -86,38 +93,13 @@ public class LobbyView {
                 .build());
 
         return Attachment.builder()
+                .fallback("Foosball lobby")
                 .color("#cccccc")
                 .blocks(List.of(
                         ActionsBlock.builder()
                                 .elements(buttons)
                                 .build()
                 ))
-                .build();
-    }
-
-    private static Attachment buildReadyAttachment(LobbyState lobby) {
-        List<LayoutBlock> blocks = new ArrayList<>();
-
-        blocks.add(SectionBlock.builder()
-                .text(MarkdownTextObject.builder().text("*Who is Ready?*").build())
-                .build());
-
-        for (LobbyState.LobbyPlayer player : lobby.getPlayers()) {
-            String style = player.isReady() ? "primary" : null;
-            blocks.add(ActionsBlock.builder()
-                    .elements(List.<BlockElement>of(
-                            ButtonElement.builder()
-                                    .text(PlainTextObject.builder().text(player.getDisplayName()).build())
-                                    .actionId("lobby_ready_" + player.getUserId())
-                                    .style(style)
-                                    .build()
-                    ))
-                    .build());
-        }
-
-        return Attachment.builder()
-                .color("#cccccc")
-                .blocks(blocks)
                 .build();
     }
 }

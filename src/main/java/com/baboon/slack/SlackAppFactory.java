@@ -44,14 +44,12 @@ public class SlackAppFactory {
         app.blockAction("lobby_switch_red", (req, ctx) -> lobbyActionHandler.handleSwitchPositions(req, ctx));
         app.blockAction("lobby_shuffle", (req, ctx) -> lobbyActionHandler.handleShuffle(req, ctx));
         app.blockAction("lobby_cancel", (req, ctx) -> lobbyActionHandler.handleCancel(req, ctx));
-        app.blockAction(Pattern.compile("lobby_ready_.+"), (req, ctx) -> lobbyActionHandler.handleReady(req, ctx));
+        app.blockAction("lobby_start", (req, ctx) -> lobbyActionHandler.handleStart(req, ctx));
 
         // Register game action handlers
         app.blockAction(Pattern.compile("game_goal_.+"), (req, ctx) -> gameActionHandler.handleGoal(req, ctx));
-        app.blockAction("game_won", (req, ctx) -> gameActionHandler.handleGameWon(req, ctx));
-        app.blockAction("game_match_over", (req, ctx) -> gameActionHandler.handleMatchOver(req, ctx));
+        app.blockAction("game_end", (req, ctx) -> gameActionHandler.handleEndGame(req, ctx));
         app.blockAction("game_cancel", (req, ctx) -> gameActionHandler.handleCancelGame(req, ctx));
-        app.blockAction("game_more", (req, ctx) -> ctx.ack()); // No-op for now
 
         return app;
     }

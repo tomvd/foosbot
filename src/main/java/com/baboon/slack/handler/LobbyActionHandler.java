@@ -87,30 +87,17 @@ public class LobbyActionHandler {
         return ctx.ack();
     }
 
-    public Response handleReady(BlockActionRequest req, ActionContext ctx) {
+    public Response handleStart(BlockActionRequest req, ActionContext ctx) {
         try {
             String channelId = req.getPayload().getChannel().getId();
             String userId = req.getPayload().getUser().getId();
-            String actionId = req.getPayload().getActions().get(0).getActionId();
-
-            String targetUserId = actionId.replace("lobby_ready_", "");
-
-            // Only the player themselves can toggle their ready status
-            if (!userId.equals(targetUserId)) return ctx.ack();
 
             LobbyState lobby = lobbyService.getLobby(channelId);
-            if (lobby == null || !lobby.hasPlayer(userId)) return ctx.ack();
+            if (lobby == null || !lobby.hasPlayer(userId) || !lobby.isFull()) return ctx.ack();
 
-            lobbyService.toggleReady(channelId, userId);
-
-            // Check if all players are ready - auto-start the game
-            if (lobby.allReady()) {
-                return startGame(ctx, channelId);
-            }
-
-            updateLobbyMessage(ctx, channelId, lobby);
+            return startGame(ctx, channelId);
         } catch (Exception e) {
-            LOG.error("Error handling ready", e);
+            LOG.error("Error handling start", e);
         }
         return ctx.ack();
     }
@@ -149,7 +136,7 @@ public class LobbyActionHandler {
         if (needed > 0) {
             text = String.format(":soccer: %d more needed to play!", needed);
         } else {
-            text = ":soccer: The lobby is full! Everyone hit Ready!";
+            text = ":soccer: The lobby is full! Hit *Start Game* when ready!";
         }
 
         ctx.client().chatUpdate(r -> r
